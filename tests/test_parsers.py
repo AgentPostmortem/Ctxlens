@@ -105,3 +105,18 @@ def test_turns_are_monotonic(claude_jsonl, codex_session, openai_chat):
         turn_indices = [t.index for t in s.turns]
         assert turn_indices == sorted(turn_indices)
         assert turn_indices[0] == 1
+
+
+def test_empty_transcript_raises_parse_error():
+    """Empty / whitespace-only input is a parse error, not a silent zero-turn session."""
+    with pytest.raises(ParseError, match="could not detect|no messages|invalid"):
+        parse_text("")
+    with pytest.raises(ParseError, match="could not detect|no messages|invalid"):
+        parse_text("   \n\t\n  ")
+
+
+def test_claude_jsonl_empty_file_raises(tmp_path):
+    p = tmp_path / "empty.jsonl"
+    p.write_text("")
+    with pytest.raises(ParseError):
+        parse_file(p)
