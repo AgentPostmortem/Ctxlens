@@ -26,8 +26,21 @@ deps), and upgrades to exact counts automatically when `tiktoken` is installed.
 pip install ctxlens-cli                # core
 pip install "ctxlens-cli[tiktoken]"    # optional exact token counts
 
-ctxlens analyze session.jsonl
-ctxlens report session.jsonl --html -o report.html
+# From a clone, use the shipped fixture (no real session required):
+ctxlens analyze tests/fixtures/claude_code_session.jsonl
+```
+
+Expected shape (numbers vary with tokenizer; structure is stable):
+
+```text
+Source   tests/fixtures/claude_code_session.jsonl
+Format   claude-code-jsonl
+Tokens   …   Turns …   High-water …
+Waste    … tokens (…%)
+```
+
+```bash
+ctxlens report tests/fixtures/claude_code_session.jsonl --html -o report.html
 ctxlens diff before.jsonl after.jsonl
 ```
 
