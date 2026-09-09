@@ -155,7 +155,7 @@ def _load(path, fmt, tokenizer, top, tool_result_cap, tool_def_budget):
 
 
 def _maybe_fail(ratio: float, threshold: float | None):
-    if threshold is not None and ratio > threshold:
+    if threshold is not None and ratio >= threshold:
         err_console.print(
             f"[red]waste ratio {ratio * 100:.1f}% exceeds threshold {threshold * 100:.1f}%[/red]"
         )

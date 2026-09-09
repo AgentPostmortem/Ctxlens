@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 
+import pytest
+import typer
 from typer.testing import CliRunner
 
-from ctxlens.cli import app
+from ctxlens.cli import EXIT_THRESHOLD, _maybe_fail, app
 
 runner = CliRunner()
 
@@ -47,6 +49,17 @@ def test_analyze_fail_over_threshold_ok(claude_jsonl):
         app, ["analyze", str(claude_jsonl), "--fail-over-ratio", "0.99"]
     )
     assert result.exit_code == 0
+
+
+def test_maybe_fail_exact_threshold():
+    with pytest.raises(typer.Exit) as exc_info:
+        _maybe_fail(0.5, 0.5)
+    assert exc_info.value.exit_code == EXIT_THRESHOLD
+
+
+def test_maybe_fail_below_threshold():
+    _maybe_fail(0.4, 0.5)
+    _maybe_fail(0.5, None)
 
 
 def test_report_html_to_file(tmp_path, codex_session):
