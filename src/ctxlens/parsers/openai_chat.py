@@ -9,6 +9,8 @@ Accepts either a bare JSON array of messages::
 
 or an object ``{"messages": [...], "tools": [...]}`` where ``tools`` is the
 function/tool schema list sent to the model.
+
+Both ``system`` and ``developer`` messages contribute to the system segment.
 """
 
 from __future__ import annotations
@@ -41,7 +43,7 @@ class OpenAIChatParser(Parser):
             return 0.0
         roles = {m.get("role") for m in messages if isinstance(m, dict)}
         score = 0.5
-        if roles & {"system", "user", "assistant", "tool"}:
+        if roles & {"system", "developer", "user", "assistant", "tool"}:
             score += 0.3
         # a bare array is the strongest generic signal
         if isinstance(obj, list):
@@ -98,7 +100,7 @@ class OpenAIChatParser(Parser):
         )
 
     def _emit_message(self, entry, role, content, turn, out):
-        if role == "system":
+        if role in {"system", "developer"}:
             out.append(Message(Segment.SYSTEM, stringify(content), turn, role=role))
             return
         if role == "tool":
