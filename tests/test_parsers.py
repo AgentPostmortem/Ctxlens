@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from ctxlens.models import Segment
@@ -83,6 +85,41 @@ def test_parse_openai_array_roles(openai_array):
     assert any(m.segment == Segment.ASSISTANT for m in s.messages)
 
 
+@pytest.mark.parametrize("wrapped", [False, True], ids=["array", "object"])
+def test_detect_openai_developer_only(wrapped):
+    def transcript(role):
+        messages = [{"role": role, "content": "Answer concisely."}]
+        return json.dumps({"messages": messages} if wrapped else messages)
+
+    raw = transcript("developer")
+    assert detect_parser(raw) is OpenAIChatParser
+    assert OpenAIChatParser.sniff(raw) == OpenAIChatParser.sniff(transcript("system"))
+
+
+@pytest.mark.parametrize("wrapped", [False, True], ids=["array", "object"])
+def test_parse_openai_developer_role(wrapped):
+    messages = [
+        {"role": "developer", "content": "Answer concisely."},
+        {"role": "user", "content": "Hello!"},
+        {"role": "assistant", "content": "Hi!"},
+        {"role": "developer", "content": "Use bullet points now."},
+    ]
+    raw = json.dumps({"messages": messages} if wrapped else messages)
+
+    session = parse_text(raw)
+
+    assert session.source_format == "openai-chat"
+    assert [m.segment for m in session.messages] == [
+        Segment.SYSTEM,
+        Segment.USER,
+        Segment.ASSISTANT,
+        Segment.SYSTEM,
+    ]
+    assert [m.role for m in session.messages] == [m["role"] for m in messages]
+    assert [m.text for m in session.messages] == [m["content"] for m in messages]
+    assert [m.turn for m in session.messages] == [1, 1, 1, 2]
+
+
 def test_force_format_override(openai_array):
     raw = openai_array.read_text()
     s = parse_text(raw, fmt="openai-chat")
@@ -96,7 +133,9 @@ def test_unknown_format_raises():
 
 def test_bad_json_line_raises():
     with pytest.raises(ParseError):
-        ClaudeCodeParser().parse('{"type":"user","message":{"role":"user","content":"hi"}}\n{bad json')
+        ClaudeCodeParser().parse(
+            '{"type":"user","message":{"role":"user","content":"hi"}}\n{bad json'
+        )
 
 
 def test_turns_are_monotonic(claude_jsonl, codex_session, openai_chat):
