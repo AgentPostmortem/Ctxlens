@@ -99,7 +99,11 @@ def report(
         out = path.with_suffix(path.suffix + default_ext)
 
     if out is not None:
-        out.write_text(content, encoding="utf-8")
+        try:
+            out.write_text(content, encoding="utf-8")
+        except OSError as exc:
+            err_console.print(f"[red]error:[/red] {exc}")
+            raise typer.Exit(EXIT_ERROR) from exc
         err_console.print(f"[green]Wrote[/green] {out}")
     else:
         sys.stdout.write(content + "\n")

@@ -70,6 +70,14 @@ def test_report_html_to_file(tmp_path, codex_session):
     assert out.read_text().startswith("<!doctype html>")
 
 
+def test_report_missing_parent_dir(tmp_path, codex_session):
+    out = tmp_path / "missing" / "dir" / "r.html"
+    result = runner.invoke(app, ["report", str(codex_session), "--html", "-o", str(out)])
+    assert result.exit_code == 1
+    assert "error:" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
 def test_diff_json(openai_array, openai_chat):
     result = runner.invoke(
         app, ["diff", str(openai_array), str(openai_chat), "--json"]
