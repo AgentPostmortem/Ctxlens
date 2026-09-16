@@ -10,6 +10,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Attribute OpenAI chat `developer` messages to the system segment instead of
   the user segment.
+- `report --out` to a missing parent directory now exits cleanly with an
+  `error:` line instead of an unhandled traceback.
 
 ## [0.1.1] - 2026-08-06
 
