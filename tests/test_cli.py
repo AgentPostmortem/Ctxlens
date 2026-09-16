@@ -92,6 +92,25 @@ def test_analyze_missing_file():
     assert result.exit_code == 1
 
 
+@pytest.mark.parametrize(
+    ("args", "message"),
+    [
+        (["--top", "-1"], "--top"),
+        (["--top", "0"], "--top"),
+        (["--tool-result-cap", "-5"], "--tool-result-cap"),
+        (["--tool-def-budget", "-1"], "--tool-def-budget"),
+        (["--fail-over-ratio", "5"], "--fail-over-ratio"),
+        (["--fail-over-ratio", "-0.5"], "--fail-over-ratio"),
+        (["--fail-over-ratio", "nan"], "--fail-over-ratio"),
+    ],
+)
+def test_analyze_rejects_out_of_range_numeric_options(claude_jsonl, args, message):
+    result = runner.invoke(app, ["analyze", str(claude_jsonl), *args])
+    assert result.exit_code == 2
+    assert "Invalid value" in result.stderr
+    assert message in result.stderr
+
+
 def test_analyze_stdin(openai_array):
     raw = openai_array.read_text()
     result = runner.invoke(app, ["analyze", "-", "--json"], input=raw)

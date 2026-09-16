@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import sys
 from pathlib import Path
 
@@ -35,6 +36,26 @@ EXIT_THRESHOLD = 2
 EXIT_ERROR = 1
 
 
+def _positive_int(value: int) -> int:
+    if value < 1:
+        raise typer.BadParameter("must be a positive integer (>= 1)")
+    return value
+
+
+def _non_negative_int(value: int) -> int:
+    if value < 0:
+        raise typer.BadParameter("must be a non-negative integer (>= 0)")
+    return value
+
+
+def _ratio(value: float | None) -> float | None:
+    if value is None:
+        return value
+    if math.isnan(value) or math.isinf(value) or value < 0 or value > 1:
+        raise typer.BadParameter("must be within 0-1")
+    return value
+
+
 def _version_cb(value: bool):
     if value:
         console.print(f"ctxlens {__version__}")
@@ -56,11 +77,11 @@ def analyze(
     fmt: str = typer.Option("auto", "--format", "-f", help="Force a parser (auto detects)."),
     tokenizer: str = typer.Option("auto", "--tokenizer", "-t", help="Tokenizer: auto|heuristic|tiktoken."),
     as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of a terminal report."),
-    top: int = typer.Option(10, "--top", help="Number of top consumers to compute."),
-    tool_result_cap: int = typer.Option(400, "--tool-result-cap", help="Per tool-result token cap."),
-    tool_def_budget: int = typer.Option(800, "--tool-def-budget", help="Tool-definitions token budget."),
+    top: int = typer.Option(10, "--top", help="Number of top consumers to compute.", callback=_positive_int),
+    tool_result_cap: int = typer.Option(400, "--tool-result-cap", help="Per tool-result token cap.", callback=_positive_int),
+    tool_def_budget: int = typer.Option(800, "--tool-def-budget", help="Tool-definitions token budget.", callback=_non_negative_int),
     fail_over: float | None = typer.Option(
-        None, "--fail-over-ratio", help="Exit non-zero if waste ratio exceeds this (0-1). CI-friendly."
+        None, "--fail-over-ratio", help="Exit non-zero if waste ratio exceeds this (0-1). CI-friendly.", callback=_ratio
     ),
 ):
     """Analyze a single transcript and print a context profile."""
@@ -81,9 +102,9 @@ def report(
     out: Path | None = typer.Option(None, "--out", "-o", help="Write report to this file."),
     fmt: str = typer.Option("auto", "--format", "-f"),
     tokenizer: str = typer.Option("auto", "--tokenizer", "-t"),
-    tool_result_cap: int = typer.Option(400, "--tool-result-cap"),
-    tool_def_budget: int = typer.Option(800, "--tool-def-budget"),
-    fail_over: float | None = typer.Option(None, "--fail-over-ratio"),
+    tool_result_cap: int = typer.Option(400, "--tool-result-cap", callback=_positive_int),
+    tool_def_budget: int = typer.Option(800, "--tool-def-budget", callback=_non_negative_int),
+    fail_over: float | None = typer.Option(None, "--fail-over-ratio", callback=_ratio),
 ):
     """Generate an HTML (or JSON) report, to a file or stdout."""
     analysis = _load(path, fmt, tokenizer, 10, tool_result_cap, tool_def_budget)
