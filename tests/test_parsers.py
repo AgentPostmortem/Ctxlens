@@ -71,6 +71,28 @@ def test_parse_codex(codex_session):
     assert s.meta.get("session_id") == "codex-abc123"
 
 
+def test_parse_codex_skips_empty_content_messages():
+    raw = json.dumps(
+        {
+            "session": {"id": "codex-empty"},
+            "instructions": "Be concise.",
+            "items": [
+                {"type": "message", "role": "user", "content": "hello"},
+                {"type": "message", "role": "user", "content": ""},
+                {"type": "message", "role": "assistant", "content": "  "},
+                {"type": "message", "role": "assistant", "content": "world"},
+            ],
+        }
+    )
+    s = parse_text(raw, fmt="codex-session")
+    texts = [m.text for m in s.messages]
+    assert "hello" in texts
+    assert "world" in texts
+    assert "" not in texts
+    assert "  " not in texts
+    assert len(texts) == len(["hello", "world"]) + 1  # +1 instructions/session
+
+
 def test_parse_openai_object_has_tool_defs(openai_chat):
     s = parse_file(openai_chat)
     assert any(m.segment == Segment.TOOL_DEFINITIONS for m in s.messages)

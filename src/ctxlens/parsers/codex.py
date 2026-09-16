@@ -92,6 +92,8 @@ class CodexParser(Parser):
         if itype == "message":
             role = item.get("role", "user")
             text = self._content_text(item.get("content"))
+            if not text.strip():
+                return turn
             seg = Segment.ASSISTANT if role == "assistant" else Segment.USER
             if role == "system":
                 seg = Segment.SYSTEM
