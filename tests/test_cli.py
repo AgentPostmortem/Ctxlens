@@ -93,22 +93,22 @@ def test_analyze_missing_file():
 
 
 @pytest.mark.parametrize(
-    ("args", "message"),
+    ("args", "reason"),
     [
-        (["--top", "-1"], "--top"),
-        (["--top", "0"], "--top"),
-        (["--tool-result-cap", "-5"], "--tool-result-cap"),
-        (["--tool-def-budget", "-1"], "--tool-def-budget"),
-        (["--fail-over-ratio", "5"], "--fail-over-ratio"),
-        (["--fail-over-ratio", "-0.5"], "--fail-over-ratio"),
-        (["--fail-over-ratio", "nan"], "--fail-over-ratio"),
+        (["--top", "-1"], "must be a positive integer (>= 1)"),
+        (["--top", "0"], "must be a positive integer (>= 1)"),
+        (["--tool-result-cap", "-5"], "must be a positive integer (>= 1)"),
+        (["--tool-def-budget", "-1"], "must be a non-negative integer (>= 0)"),
+        (["--fail-over-ratio", "5"], "must be within 0-1"),
+        (["--fail-over-ratio", "-0.5"], "must be within 0-1"),
+        (["--fail-over-ratio", "nan"], "must be within 0-1"),
     ],
 )
-def test_analyze_rejects_out_of_range_numeric_options(claude_jsonl, args, message):
+def test_analyze_rejects_out_of_range_numeric_options(claude_jsonl, args, reason):
     result = runner.invoke(app, ["analyze", str(claude_jsonl), *args])
     assert result.exit_code == 2
     assert "Invalid value" in result.stderr
-    assert message in result.stderr
+    assert reason in result.stderr
 
 
 def test_analyze_stdin(openai_array):
