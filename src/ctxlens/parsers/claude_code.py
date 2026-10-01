@@ -70,7 +70,12 @@ class ClaudeCodeParser(Parser):
 
             etype = entry.get("type")
             if etype == "summary":
-                meta.setdefault("summary", entry.get("summary"))
+                summary = entry.get("summary")
+                if summary:
+                    existing = meta.get("summary")
+                    meta["summary"] = (
+                        f"{existing}\n{summary}" if existing else str(summary)
+                    )
                 continue
             if etype == "system" and "message" not in entry:
                 text = entry.get("content") or entry.get("text") or ""

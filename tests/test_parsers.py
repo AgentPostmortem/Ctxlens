@@ -53,6 +53,33 @@ def test_parse_claude_segments_and_turns(claude_jsonl):
     assert len(s.turns) == 4
 
 
+def test_parse_claude_multiple_summaries_preserved():
+    raw = "\n".join(
+        [
+            json.dumps(
+                {
+                    "type": "summary",
+                    "summary": "First summary",
+                }
+            ),
+            json.dumps(
+                {
+                    "type": "summary",
+                    "summary": "Second summary",
+                }
+            ),
+            json.dumps(
+                {
+                    "type": "user",
+                    "message": {"role": "user", "content": "Hello"},
+                }
+            ),
+        ]
+    )
+    session = parse_text(raw, fmt="claude-code-jsonl")
+    assert session.meta["summary"] == "First summary\nSecond summary"
+
+
 def test_parse_claude_tool_ref_present(claude_jsonl):
     s = parse_file(claude_jsonl)
     calls = [m for m in s.messages if m.segment == Segment.TOOL_CALL]
