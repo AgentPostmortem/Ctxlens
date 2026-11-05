@@ -70,6 +70,8 @@ class Session:
     source_format: str
     messages: list[Message] = field(default_factory=list)
     meta: dict = field(default_factory=dict)
+    # A tokenizer may legitimately count nonempty text as zero tokens.
+    _tokens_counted: bool = field(default=False, init=False, repr=False, compare=False)
 
     @property
     def turns(self) -> list[Turn]:

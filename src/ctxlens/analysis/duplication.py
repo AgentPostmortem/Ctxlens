@@ -41,7 +41,19 @@ def find_duplicates(session: Session, *, min_tokens: int = 20) -> list[Duplicate
 
     ``min_tokens`` filters out trivially small bodies (e.g. an empty tool
     result) that are not worth flagging.
+
+    Nonempty sessions with no token counts must be passed to ``build_profile``
+    first; otherwise a ``ValueError`` prevents a misleading empty result.
     """
+    if (
+        not session._tokens_counted
+        and all(m.tokens == 0 for m in session.messages)
+        and any(m.text.strip() for m in session.messages)
+    ):
+        raise ValueError(
+            "Session has no token counts; call build_profile(session, tokenizer) "
+            "before analyzing waste or duplicates."
+        )
     groups: dict[tuple[str, str], list[Message]] = {}
 
     for m in session.messages:

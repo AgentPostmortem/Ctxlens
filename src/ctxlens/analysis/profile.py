@@ -67,6 +67,7 @@ def build_profile(
     """Count tokens for every message and aggregate them into a Profile."""
     for m in session.messages:
         m.tokens = tokenizer.count(m.text)
+    session._tokens_counted = True
 
     # per-segment totals
     seg_tokens: dict[Segment, int] = {}

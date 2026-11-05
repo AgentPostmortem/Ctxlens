@@ -8,6 +8,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Reject nonempty, unprofiled sessions with all-zero token counts in waste and
+  duplicate analysis instead of silently reporting no waste.
 - Attribute OpenAI chat `developer` messages to the system segment instead of
   the user segment.
 - `report --out` to a missing parent directory now exits cleanly with an
