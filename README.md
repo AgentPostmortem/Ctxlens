@@ -96,6 +96,12 @@ Each recommendation carries a severity and an estimated token saving.
 tokens, tool-result bloat (tokens above `--tool-result-cap`), stale tool
 outputs, and tool-definition overage (above `--tool-def-budget`).
 
+When calling the analysis functions directly, run `build_profile(session,
+tokenizer)` before `build_waste_report(session)` or `find_duplicates(session)`.
+A nonempty session whose token counts are all still zero raises `ValueError`
+instead of silently reporting no waste. Empty sessions and correctly profiled
+zero-token content remain valid; the CLI already performs this profiling step.
+
 ## CI usage
 
 Fail a build when a captured agent session wastes too much context:

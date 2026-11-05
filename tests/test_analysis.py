@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from ctxlens.analysis import (
     build_profile,
     build_waste_report,
@@ -73,6 +75,51 @@ def test_find_duplicates_ignores_singletons():
     for m in s.messages:
         m.tokens = HeuristicTokenizer().count(m.text)
     assert find_duplicates(s) == []
+
+
+@pytest.mark.parametrize("analyze", [build_waste_report, find_duplicates])
+def test_unprofiled_nonempty_session_requires_token_counts(analyze):
+    body = "large repeated tool output " * 100
+    session = Session("test", [
+        Message(Segment.TOOL_RESULT, body, turn=1, ref="file.py"),
+        Message(Segment.TOOL_RESULT, body, turn=2, ref="file.py"),
+    ])
+
+    with pytest.raises(ValueError, match="build_profile"):
+        analyze(session)
+
+    assert [message.tokens for message in session.messages] == [0, 0]
+    build_profile(session, HeuristicTokenizer())
+    assert find_duplicates(session)[0].wasted_tokens > 0
+    assert build_waste_report(session).total_waste > 0
+
+
+@pytest.mark.parametrize("text", ["", " \n\t", "___"])
+def test_profiled_zero_token_content_remains_valid(text):
+    session = Session("test", [Message(Segment.USER, text, turn=1)])
+    build_profile(session, HeuristicTokenizer())
+
+    assert session.total_tokens == 0
+    assert find_duplicates(session) == []
+    assert build_waste_report(session).waste_ratio == 0.0
+
+
+@pytest.mark.parametrize("messages", [[], [Message(Segment.USER, "", turn=1)]])
+def test_empty_unprofiled_session_remains_valid(messages):
+    session = Session("test", messages)
+    assert find_duplicates(session) == []
+    assert build_waste_report(session).total_tokens == 0
+
+
+def test_partial_token_counts_are_not_recomputed():
+    session = Session("test", [
+        Message(Segment.USER, "counted", turn=1, tokens=7),
+        Message(Segment.ASSISTANT, "uncounted", turn=1),
+    ])
+
+    assert find_duplicates(session) == []
+    assert build_waste_report(session).total_tokens == 7
+    assert [message.tokens for message in session.messages] == [7, 0]
 
 
 def test_waste_report_ratio_and_totals():
